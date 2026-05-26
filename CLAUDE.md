@@ -13,7 +13,7 @@
 
 ## 기술 스택
 
-- **모델**: Qwen2-VL-7B-Instruct (HuggingFace, 로컬 실행)
+- **모델**: Llama 3.2 Vision 11B (Meta, HuggingFace, 로컬 실행, 4비트 양자화)
 - **OCR**: microsoft/trocr-large-printed
 - **UI**: Gradio
 - **비디오**: OpenCV
@@ -154,7 +154,7 @@ board-game-ai/
 ├── test_connection.py       # Gradio 연결 테스트용
 ├── main.py                  # 앱 진입점
 ├── models/
-│   ├── vision.py            # Qwen2-VL 실시간 인식
+│   ├── vision.py            # Llama 3.2 Vision 실시간 인식
 │   └── ocr.py               # TrOCR 설명서 파싱
 ├── rules/
 │   ├── preloaded/           # 사전 입력 게임 규칙 (UNO 등)
@@ -176,7 +176,7 @@ board-game-ai/
 - [x] 맥 → 데스크탑 SSH 키 방식 접속 설정 완료
 - [x] conda 가상환경 생성 및 패키지 설치 완료
 - [ ] test_connection.py 실행 및 Gradio UI 동작 확인
-- [ ] Qwen2-VL 모델 로드 및 테스트
+- [ ] Llama 3.2 Vision 모델 로드 및 테스트
 - [ ] UNO 규칙 DB 작성
 - [ ] 카메라 실시간 인식 구현
 - [ ] 이벤트 감지 로직 구현
@@ -204,7 +204,7 @@ board-game-ai/
 - **벡터 DB**: ChromaDB (로컬 파일 저장, 간단한 API)
 - **임베딩 모델**: `BAAI/bge-m3` (다국어 최고 성능, 한국어 지원, 로컬 실행)
 - 게임별 ChromaDB 컬렉션으로 분리 저장
-- 질의 → 관련 규칙 청크 검색 → Qwen2-VL에 컨텍스트로 전달 → 답변
+- 질의 → 관련 규칙 청크 검색 → Llama 3.2 Vision에 컨텍스트로 전달 → 답변
 
 ### 3. 카드 인식 시스템
 
@@ -214,7 +214,7 @@ board-game-ai/
     ↓ (2초 간격 캡처)
 OpenCV 전처리 (카드 영역 crop, 밝기/대비 보정, 원근 보정)
     ↓
-Qwen2-VL → 카드 식별
+Llama 3.2 Vision → 카드 식별
     ↓
 RAG에서 해당 카드 기능 설명 반환
 ```
@@ -223,7 +223,7 @@ RAG에서 해당 카드 기능 설명 반환
 
 | 게임 유형 | 방식 |
 |-----------|------|
-| 유명 게임 (UNO 등) | Qwen2-VL 사전 파인튜닝 (장시간, 고품질) |
+| 유명 게임 (UNO 등) | Llama 3.2 Vision 사전 파인튜닝 (장시간, 고품질) |
 | 기타 게임 | Reference 이미지 방식 (카드당 10장 내외 등록 → 프롬프트에 직접 첨부) |
 
 > **파인튜닝 10장은 인식률 낮아서 채택 안 함.** 대신 등록한 이미지를 프롬프트 reference로 활용하는 방식이 더 robust함.
@@ -233,7 +233,7 @@ RAG에서 해당 카드 기능 설명 반환
 ```
 board-game-ai/
 ├── models/
-│   ├── vision.py        # Qwen2-VL 카드 인식 (OpenCV 전처리 포함)
+│   ├── vision.py        # Llama 3.2 Vision 카드 인식 (OpenCV 전처리 포함)
 │   └── ocr.py           # TrOCR 설명서 파싱
 ├── rules/
 │   ├── preloaded/
@@ -254,6 +254,6 @@ board-game-ai/
 2. `rules/game_registry.py` — 게임 목록 관리
 3. `rules/rag.py` — ChromaDB + bge-m3 구성
 4. `rules/parser.py` — TrOCR 설명서 파싱
-5. `models/vision.py` — OpenCV 전처리 + Qwen2-VL 카드 인식
+5. `models/vision.py` — OpenCV 전처리 + Llama 3.2 Vision 카드 인식
 6. `game/state.py`, `game/events.py` — 게임 상태 및 이벤트
 7. `ui/app.py` — Gradio UI 통합
