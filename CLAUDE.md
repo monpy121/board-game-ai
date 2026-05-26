@@ -94,7 +94,7 @@
 | 상황 | 명령 | 실행 위치 |
 |------|------|-----------|
 | 맥에서 작업 후 데스크탑에 배포 | `./dev.sh "메시지"` | 맥 |
-| 데스크탑 작업 내용을 맥으로 받기 | `./sync.sh` | 맥 |
+| 데스크탑 작업 내용을 맥으로 받기 | `git pull --rebase` | 맥 |
 | 데스크탑에서 작업 후 GitHub에 올리기 | `.\push.ps1 "메시지"` | 데스크탑 |
 
 ### dev.sh 동작 순서 (맥 → 데스크탑)
@@ -111,7 +111,7 @@
 ```
 ```bash
 # 맥에서
-./sync.sh                # GitHub에서 받아옴
+git pull --rebase        # GitHub에서 받아옴
 ```
 
 ## "SSH 켜줘" 명령 시 체크리스트
@@ -149,7 +149,6 @@ board-game-ai/
 ├── CLAUDE.md
 ├── requirements.txt
 ├── dev.sh                   # 맥 → 데스크탑 배포 (push + SSH pull + 실행)
-├── sync.sh                  # 맥에서 데스크탑 작업 내용 받기 (git pull)
 ├── push.ps1                 # 데스크탑 → GitHub push
 ├── restart.ps1              # 데스크탑 서버 재시작
 ├── test_connection.py       # Gradio 연결 테스트용
@@ -182,36 +181,6 @@ board-game-ai/
 - [ ] 카메라 실시간 인식 구현
 - [ ] 이벤트 감지 로직 구현
 - [ ] Gradio UI 구현
-
-## 스크립트 정리 TODO (맥에서 처리)
-
-> 맥 Claude가 아래 내용 보고 처리할 것.
-
-### 1. sync.sh 삭제
-`git pull --rebase` 한 줄짜리라 스크립트 불필요.
-```bash
-rm sync.sh
-```
-
-### 2. dev.sh python 경로 버그 수정
-현재 7번째 줄:
-```
-C:\\Users\\user\\anaconda3\\envs\\board-game-ai\\python.exe main.py
-```
-올바른 경로:
-```
-C:\\Users\\user\\anaconda3\\envs\\board-game-ai\\Scripts\\python.exe main.py
-```
-
-### 3. push.ps1, restart.ps1 유지
-그대로 둘 것.
-
-### 4. 수정 후 push
-```bash
-git add -A
-git commit -m "fix: sync.sh 삭제, dev.sh python 경로 수정"
-git push
-```
 
 ## 데모 게임
 
