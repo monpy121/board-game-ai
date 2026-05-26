@@ -1,5 +1,6 @@
 #!/bin/bash
 # Mac에서 실행: 코드 push 후 Windows에서 실행 + 출력 확인
+git pull --rebase
 git add -A
 git commit -m "${1:-update}"
 git push
