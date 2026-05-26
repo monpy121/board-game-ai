@@ -67,3 +67,8 @@ board-game-ai/
 1. Mac에서 코드 작성 → `git push`
 2. Windows에서 `git pull` → `python main.py` 실행
 3. Mac 브라우저에서 Tailscale IP로 접속하여 테스트
+
+## 경로
+
+- **Mac**: `/Users/chaeseunghun/board-game-ai`
+- **Windows**: `C:\Projects\board-game-ai`
