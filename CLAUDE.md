@@ -86,30 +86,32 @@
 
 ## Git 작업 흐름 (맥 ↔ 데스크탑 동기화)
 
-> 맥과 데스크탑 양쪽에서 코드를 작업하므로 작업 전 pull, 작업 후 push 습관 필요.
+> GitHub가 중간 저장소 역할. 맥 → GitHub → 데스크탑 순으로 전달됨.
+> SSH는 dev.sh 실행 시에만 잠깐 연결되고 바로 끊김 (상시 연결 아님).
 
-### 맥에서 작업할 때
+### 스크립트 정리
+
+| 상황 | 명령 | 실행 위치 |
+|------|------|-----------|
+| 맥에서 작업 후 데스크탑에 배포 | `./dev.sh "메시지"` | 맥 |
+| 데스크탑 작업 내용을 맥으로 받기 | `./sync.sh` | 맥 |
+| 데스크탑에서 작업 후 GitHub에 올리기 | `.\push.ps1 "메시지"` | 데스크탑 |
+
+### dev.sh 동작 순서 (맥 → 데스크탑)
+```
+1. git pull --rebase  (GitHub에서 데스크탑 작업 내용 먼저 받음)
+2. git add -A + commit + push  (맥 작업 내용 GitHub에 올림)
+3. SSH로 데스크탑 접속 → git pull → main.py 실행 → SSH 끊김
+```
+
+### 데스크탑에서 작업 후 맥으로 보내기
+```powershell
+# 데스크탑에서
+.\push.ps1 "작업 내용"   # GitHub에 올림
+```
 ```bash
-cd board-game-ai
-git pull                          # 작업 시작 전 항상
-# ... 코딩 ...
-git add .
-git commit -m "작업 내용"
-git push
-```
-
-### 데스크탑에서 받을 때
-```powershell
-cd C:\Users\user\board-game-ai
-git pull
-```
-
-### 데스크탑에서 작업 후 올릴 때
-```powershell
-cd C:\Users\user\board-game-ai
-git add .
-git commit -m "작업 내용"
-git push
+# 맥에서
+./sync.sh                # GitHub에서 받아옴
 ```
 
 ## "SSH 켜줘" 명령 시 체크리스트
@@ -146,6 +148,10 @@ git push
 board-game-ai/
 ├── CLAUDE.md
 ├── requirements.txt
+├── dev.sh                   # 맥 → 데스크탑 배포 (push + SSH pull + 실행)
+├── sync.sh                  # 맥에서 데스크탑 작업 내용 받기 (git pull)
+├── push.ps1                 # 데스크탑 → GitHub push
+├── restart.ps1              # 데스크탑 서버 재시작
 ├── test_connection.py       # Gradio 연결 테스트용
 ├── main.py                  # 앱 진입점
 ├── models/
