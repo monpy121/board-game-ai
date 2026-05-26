@@ -41,59 +41,67 @@ def _order_points(pts):
 
 def detect_card(frame):
     """
-    프레임에서 가장 가까운 카드 1장을 감지해 정면으로 crop한 이미지 반환.
+    허프 변환으로 선 감지 → 가장 큰 사각형 찾아 crop.
     카드를 찾지 못하면 None 반환.
     """
     frame_area = frame.shape[0] * frame.shape[1]
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blurred, 50, 150)
 
-    # 적응형 임계값으로 카드 흰 테두리 강조
-    thresh = cv2.adaptiveThreshold(
-        blurred, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY_INV,
-        11, 2
+    # 허프 변환으로 직선 감지
+    lines = cv2.HoughLinesP(
+        edges,
+        rho=1,
+        theta=np.pi / 180,
+        threshold=80,
+        minLineLength=50,
+        maxLineGap=10,
     )
 
-    # 잡음 제거
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+    if lines is None:
+        return None
 
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # 감지된 선을 빈 마스크에 그리기
+    line_mask = np.zeros_like(edges)
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(line_mask, (x1, y1), (x2, y2), 255, 2)
 
-    best_contour = None
+    # 선으로 채워진 마스크에서 컨투어 찾기
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    closed = cv2.morphologyEx(line_mask, cv2.MORPH_CLOSE, kernel, iterations=3)
+    contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    best_box = None
     best_area = 0
 
     for contour in contours:
         area = cv2.contourArea(contour)
-
-        # 너무 작거나 프레임 전체에 가까운 건 무시
         if area < 5000 or area > frame_area * 0.95:
             continue
 
-        peri = cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
-
-        if len(approx) != 4:
+        # minAreaRect로 기울어진 카드도 정확히 감지
+        rect = cv2.minAreaRect(contour)
+        w, h = rect[1]
+        if w < 10 or h < 10:
             continue
 
-        # 가로세로 비율 체크 (UNO 카드 비율: 약 1:1.6)
-        x, y, w, h = cv2.boundingRect(approx)
+        # 가로세로 비율 체크
         ratio = max(w, h) / min(w, h)
         if ratio < 1.2 or ratio > 2.5:
             continue
 
         if area > best_area:
             best_area = area
-            best_contour = approx
+            best_box = cv2.boxPoints(rect)
 
-    if best_contour is None:
+    if best_box is None:
         return None
 
     # 원근 변환으로 카드 정면 펼치기
-    ordered = _order_points(best_contour)
+    ordered = _order_points(best_box)
     tl, tr, br, bl = ordered
 
     width = int(max(
