@@ -48,6 +48,42 @@
   git clone https://github.com/monpy121/board-game-ai.git
   ```
 
+## "맥 Git 설정해줘" 명령 시 체크리스트
+
+> 맥에서 처음 GitHub 연동할 때 아래 순서로 진행. 이미 된 항목은 건너뜀.
+
+1. **GitHub SSH 연결 확인**
+   ```bash
+   ssh -T git@github.com
+   ```
+   - `Hi monpy121!` 메시지 나오면 OK → 3번으로
+   - 실패하면 2번으로
+
+2. **GitHub SSH 키 등록** (미연결 시)
+   ```bash
+   # 기존 SSH 공개키 확인
+   cat ~/.ssh/id_ed25519.pub
+   ```
+   - 출력된 공개키를 GitHub → Settings → SSH and GPG keys → New SSH key에 등록
+   - 등록 후 1번 다시 확인
+
+3. **git 사용자 정보 설정 확인**
+   ```bash
+   git config --global user.name
+   git config --global user.email
+   ```
+   - 비어있으면:
+     ```bash
+     git config --global user.name "monpy121"
+     git config --global user.email "seunghun1480@gmail.com"
+     ```
+
+4. **repo clone (최초 1회)**
+   ```bash
+   git clone git@github.com:monpy121/board-game-ai.git
+   ```
+   - 이미 clone 되어 있으면 생략
+
 ## Git 작업 흐름 (맥 ↔ 데스크탑 동기화)
 
 > 맥과 데스크탑 양쪽에서 코드를 작업하므로 작업 전 pull, 작업 후 push 습관 필요.
