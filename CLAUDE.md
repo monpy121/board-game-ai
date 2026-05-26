@@ -139,7 +139,7 @@ git pull --rebase        # GitHub에서 받아옴
    ```powershell
    cd C:\Users\user\board-game-ai
    # python 실행 시 가상환경 직접 지정
-   C:\Users\user\anaconda3\envs\board-game-ai\Scripts\python.exe <파일명>.py
+   C:\Users\user\anaconda3\envs\board-game-ai\python.exe <파일명>.py
    ```
 
 ## 프로젝트 구조
