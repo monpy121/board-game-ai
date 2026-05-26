@@ -21,27 +21,36 @@ def load_dataset():
     with open(DATASET_PATH, encoding="utf-8") as f:
         data = json.load(f)
 
-    def to_conversation(item):
-        image = Image.open(item["image"]).convert("RGB")
-        return {
-            "image": image,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image"},
-                        {"type": "text", "text": item["question"]},
-                    ],
-                },
-                {
-                    "role": "assistant",
-                    "content": [{"type": "text", "text": item["answer"]}],
-                },
-            ],
+    # 이미지를 미리 로드하지 않고 경로만 저장 → 학습 시 그때그때 로드
+    records = [
+        {
+            "image_path": item["image"],
+            "question": item["question"],
+            "answer": item["answer"],
         }
-
-    records = [to_conversation(item) for item in data]
+        for item in data
+    ]
     return Dataset.from_list(records)
+
+
+def convert_to_conversation(sample):
+    image = Image.open(sample["image_path"]).convert("RGB")
+    return {
+        "image": image,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": sample["question"]},
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [{"type": "text", "text": sample["answer"]}],
+            },
+        ],
+    }
 
 
 def train():
@@ -67,6 +76,9 @@ def train():
 
     dataset = load_dataset()
     print(f"학습 데이터: {len(dataset)}장")
+
+    # 학습 시점에 이미지 로드
+    dataset = dataset.map(convert_to_conversation, remove_columns=["image_path", "question", "answer"])
 
     FastVisionModel.for_training(model)
 
