@@ -175,12 +175,42 @@ board-game-ai/
 - [x] 맥 Tailscale 설치 및 연결
 - [x] 맥 → 데스크탑 SSH 키 방식 접속 설정 완료
 - [x] conda 가상환경 생성 및 패키지 설치 완료
-- [ ] test_connection.py 실행 및 Gradio UI 동작 확인
-- [ ] Llama 3.2 Vision 모델 로드 및 테스트
-- [ ] UNO 규칙 DB 작성
-- [ ] 카메라 실시간 인식 구현
-- [ ] 이벤트 감지 로직 구현
-- [ ] Gradio UI 구현
+- [x] PyTorch CUDA 설치 (torch 2.10.0+cu128, unsloth 2026.5.8)
+- [x] UNO 규칙 텍스트 작성 (rules/preloaded/uno.py)
+- [x] 카드 감지 + Llama 인식 모듈 작성 (models/vision.py)
+- [x] 데이터 준비 스크립트 작성 (data/prepare.py)
+- [x] LoRA 파인튜닝 스크립트 작성 (train/finetune.py)
+- [x] 초록 카드 사진 1204장 전처리 완료 (data/processed/)
+- [ ] **파인튜닝 실행 중** (초록 카드 기준) ← 현재 여기
+- [ ] 나머지 색상 카드 촬영 및 전체 재학습
+- [ ] rules/game_registry.py
+- [ ] rules/rag.py — ChromaDB + bge-m3
+- [ ] rules/parser.py — TrOCR
+- [ ] game/state.py, game/events.py
+- [ ] ui/app.py — Gradio UI 통합
+
+## 패키지 버전 (중요)
+
+> torch 버전 변경 금지 — unsloth가 2.11.0 이상 미지원
+
+- torch: `2.10.0+cu128`
+- unsloth: `2026.5.8`
+- transformers: `5.5.0`
+- CUDA 드라이버: `13.2` / 툴킷: `12.8`
+
+## 파인튜닝 실행 명령
+
+```powershell
+cd C:\Users\user\board-game-ai
+C:\Users\user\anaconda3\envs\board-game-ai\python.exe train/finetune.py
+```
+
+## 데이터 준비 실행 명령
+
+```powershell
+cd C:\Users\user\board-game-ai
+C:\Users\user\anaconda3\envs\board-game-ai\python.exe data/prepare.py
+```
 
 ## 데모 게임
 
