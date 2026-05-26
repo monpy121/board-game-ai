@@ -183,6 +183,36 @@ board-game-ai/
 - [ ] 이벤트 감지 로직 구현
 - [ ] Gradio UI 구현
 
+## 스크립트 정리 TODO (맥에서 처리)
+
+> 맥 Claude가 아래 내용 보고 처리할 것.
+
+### 1. sync.sh 삭제
+`git pull --rebase` 한 줄짜리라 스크립트 불필요.
+```bash
+rm sync.sh
+```
+
+### 2. dev.sh python 경로 버그 수정
+현재 7번째 줄:
+```
+C:\\Users\\user\\anaconda3\\envs\\board-game-ai\\python.exe main.py
+```
+올바른 경로:
+```
+C:\\Users\\user\\anaconda3\\envs\\board-game-ai\\Scripts\\python.exe main.py
+```
+
+### 3. push.ps1, restart.ps1 유지
+그대로 둘 것.
+
+### 4. 수정 후 push
+```bash
+git add -A
+git commit -m "fix: sync.sh 삭제, dev.sh python 경로 수정"
+git push
+```
+
 ## 데모 게임
 
 **UNO** - 첫 번째 구현 대상
