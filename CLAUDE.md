@@ -185,3 +185,75 @@ board-game-ai/
 ## 데모 게임
 
 **UNO** - 첫 번째 구현 대상
+
+---
+
+## 설계 확정 내용 (2026-05-27)
+
+### 1. 규칙 데이터 시스템
+
+| 게임 유형 | 규칙 입력 방식 |
+|-----------|---------------|
+| 유명 게임 (UNO 등) | 직접 텍스트 작성 → `rules/preloaded/` |
+| 기타 게임 | 설명서 이미지 업로드 → TrOCR OCR → 텍스트 추출 |
+
+- 게임 선택 시 preloaded 여부 자동 판단 (`game_registry.py`에서 관리)
+
+### 2. RAG 구성
+
+- **벡터 DB**: ChromaDB (로컬 파일 저장, 간단한 API)
+- **임베딩 모델**: `BAAI/bge-m3` (다국어 최고 성능, 한국어 지원, 로컬 실행)
+- 게임별 ChromaDB 컬렉션으로 분리 저장
+- 질의 → 관련 규칙 청크 검색 → Qwen2-VL에 컨텍스트로 전달 → 답변
+
+### 3. 카드 인식 시스템
+
+**인식 파이프라인:**
+```
+카메라 프레임
+    ↓ (2초 간격 캡처)
+OpenCV 전처리 (카드 영역 crop, 밝기/대비 보정, 원근 보정)
+    ↓
+Qwen2-VL → 카드 식별
+    ↓
+RAG에서 해당 카드 기능 설명 반환
+```
+
+**게임별 카드 인식 방식:**
+
+| 게임 유형 | 방식 |
+|-----------|------|
+| 유명 게임 (UNO 등) | Qwen2-VL 사전 파인튜닝 (장시간, 고품질) |
+| 기타 게임 | Reference 이미지 방식 (카드당 10장 내외 등록 → 프롬프트에 직접 첨부) |
+
+> **파인튜닝 10장은 인식률 낮아서 채택 안 함.** 대신 등록한 이미지를 프롬프트 reference로 활용하는 방식이 더 robust함.
+
+### 4. 확정 파일 구조
+
+```
+board-game-ai/
+├── models/
+│   ├── vision.py        # Qwen2-VL 카드 인식 (OpenCV 전처리 포함)
+│   └── ocr.py           # TrOCR 설명서 파싱
+├── rules/
+│   ├── preloaded/
+│   │   └── uno.py       # UNO 규칙 텍스트 (한국어)
+│   ├── parser.py        # 이미지 → TrOCR → 텍스트
+│   ├── rag.py           # ChromaDB + bge-m3 임베딩/검색
+│   └── game_registry.py # 유명 게임 목록 (preloaded 여부 판단)
+├── game/
+│   ├── state.py         # 현재 게임 상태 추적
+│   └── events.py        # 이벤트 감지 및 규칙 위반 체크
+└── ui/
+    └── app.py           # Gradio UI
+```
+
+### 5. 다음 코딩 순서
+
+1. `rules/preloaded/uno.py` — UNO 규칙 텍스트 작성
+2. `rules/game_registry.py` — 게임 목록 관리
+3. `rules/rag.py` — ChromaDB + bge-m3 구성
+4. `rules/parser.py` — TrOCR 설명서 파싱
+5. `models/vision.py` — OpenCV 전처리 + Qwen2-VL 카드 인식
+6. `game/state.py`, `game/events.py` — 게임 상태 및 이벤트
+7. `ui/app.py` — Gradio UI 통합
