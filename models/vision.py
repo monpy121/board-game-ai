@@ -44,24 +44,45 @@ def detect_card(frame):
     프레임에서 가장 가까운 카드 1장을 감지해 정면으로 crop한 이미지 반환.
     카드를 찾지 못하면 None 반환.
     """
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, 50, 150)
+    frame_area = frame.shape[0] * frame.shape[1]
 
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+
+    # 적응형 임계값으로 카드 흰 테두리 강조
+    thresh = cv2.adaptiveThreshold(
+        blurred, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        11, 2
+    )
+
+    # 잡음 제거
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     best_contour = None
     best_area = 0
 
     for contour in contours:
+        area = cv2.contourArea(contour)
+
+        # 너무 작거나 프레임 전체에 가까운 건 무시
+        if area < 5000 or area > frame_area * 0.95:
+            continue
+
         peri = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
 
         if len(approx) != 4:
             continue
 
-        area = cv2.contourArea(approx)
-        if area < 5000:  # 너무 작은 사각형 무시
+        # 가로세로 비율 체크 (UNO 카드 비율: 약 1:1.6)
+        x, y, w, h = cv2.boundingRect(approx)
+        ratio = max(w, h) / min(w, h)
+        if ratio < 1.2 or ratio > 2.5:
             continue
 
         if area > best_area:
@@ -83,6 +104,9 @@ def detect_card(frame):
         np.linalg.norm(tr - br),
         np.linalg.norm(tl - bl)
     ))
+
+    if width < 50 or height < 50:
+        return None
 
     dst = np.array([
         [0, 0],
