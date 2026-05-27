@@ -181,7 +181,7 @@ board-game-ai/
 - [x] 데이터 준비 스크립트 작성 (data/prepare.py)
 - [x] LoRA 파인튜닝 스크립트 작성 (train/finetune.py)
 - [x] 초록 카드 사진 1204장 전처리 완료 (data/processed/)
-- [ ] **파인튜닝 실행 중** (초록 카드 기준) ← 현재 여기
+- [ ] **파인튜닝 오류 수정 필요** ← 현재 여기
 - [ ] 나머지 색상 카드 촬영 및 전체 재학습
 - [ ] rules/game_registry.py
 - [ ] rules/rag.py — ChromaDB + bge-m3
@@ -197,6 +197,39 @@ board-game-ai/
 - unsloth: `2026.5.8`
 - transformers: `5.5.0`
 - CUDA 드라이버: `13.2` / 툴킷: `12.8`
+
+## 파인튜닝 오류 및 수정 방법
+
+**오류**: `pyarrow.lib.ArrowInvalid: offset overflow while concatenating arrays`
+**원인**: `dataset.map()`이 이미지를 pyarrow 테이블에 저장하는데 2GB 제한 초과 (1204장)
+**수정 방향**: HuggingFace Dataset.map() 대신 PyTorch 커스텀 Dataset 클래스 사용
+
+```python
+from torch.utils.data import Dataset as TorchDataset
+
+class CardDataset(TorchDataset):
+    def __init__(self, data):
+        self.data = data
+    def __len__(self):
+        return len(self.data)
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        image = Image.open(item["image_path"]).convert("RGB")
+        return {
+            "image": image,
+            "messages": [
+                {"role": "user", "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": item["question"]},
+                ]},
+                {"role": "assistant", "content": [
+                    {"type": "text", "text": item["answer"]}
+                ]},
+            ],
+        }
+```
+
+`train/finetune.py`에서 `Dataset.from_list` + `.map()` 제거하고 위 클래스로 교체할 것.
 
 ## 파인튜닝 실행 명령
 
