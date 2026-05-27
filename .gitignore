@@ -1,0 +1,8 @@
+data/raw/
+data/processed/
+models/finetuned/
+unsloth_compiled_cache/
+.gradio/
+__pycache__/
+*.pyc
+*.pyo

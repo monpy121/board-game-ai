@@ -6,9 +6,9 @@ data/processed/dataset.json 기반으로 UNO 카드 인식 특화 학습
 import json
 from pathlib import Path
 from PIL import Image
+from torch.utils.data import Dataset as TorchDataset
 
 from unsloth import FastVisionModel
-from datasets import Dataset
 from trl import SFTTrainer, SFTConfig
 from unsloth.trainer import UnslothVisionDataCollator
 
@@ -17,12 +17,38 @@ OUTPUT_DIR = Path(__file__).parent.parent / "models" / "finetuned"
 DATASET_PATH = Path(__file__).parent.parent / "data" / "processed" / "dataset.json"
 
 
-def load_dataset():
+class CardDataset(TorchDataset):
+    def __init__(self, data):
+        self.data = data
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        image = Image.open(item["image_path"]).convert("RGB")
+        return {
+            "images": [image],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": item["question"]},
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": item["answer"]}],
+                },
+            ],
+        }
+
+
+def load_data():
     with open(DATASET_PATH, encoding="utf-8") as f:
         data = json.load(f)
-
-    # 이미지를 미리 로드하지 않고 경로만 저장 → 학습 시 그때그때 로드
-    records = [
+    return [
         {
             "image_path": item["image"],
             "question": item["question"],
@@ -30,27 +56,6 @@ def load_dataset():
         }
         for item in data
     ]
-    return Dataset.from_list(records)
-
-
-def convert_to_conversation(sample):
-    image = Image.open(sample["image_path"]).convert("RGB")
-    return {
-        "image": image,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image"},
-                    {"type": "text", "text": sample["question"]},
-                ],
-            },
-            {
-                "role": "assistant",
-                "content": [{"type": "text", "text": sample["answer"]}],
-            },
-        ],
-    }
 
 
 def train():
@@ -74,11 +79,8 @@ def train():
         random_state=42,
     )
 
-    dataset = load_dataset()
+    dataset = CardDataset(load_data())
     print(f"학습 데이터: {len(dataset)}장")
-
-    # 학습 시점에 이미지 로드
-    dataset = dataset.map(convert_to_conversation, remove_columns=["image_path", "question", "answer"])
 
     FastVisionModel.for_training(model)
 
